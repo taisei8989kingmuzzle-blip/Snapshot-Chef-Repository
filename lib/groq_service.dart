@@ -1,27 +1,21 @@
 import 'dart:convert';
-import 'dart:io';
-
+import 'package:cross_file/cross_file.dart';
 import 'package:http/http.dart' as http;
 
 class GroqService {
-
-  // LOCAL DEVELOPMENT
   static const String backendUrl =
-      'http://127.0.0.1:8787';
+      'https://snapshot-chef.workers.dev';
 
-  static Future<String> analyzeFridge(File image) async {
-
+  static Future<String> analyzeFridge(XFile image) async {
     final bytes = await image.readAsBytes();
 
     final base64Image = base64Encode(bytes);
 
     final response = await http.post(
       Uri.parse(backendUrl),
-
       headers: {
         'Content-Type': 'application/json',
       },
-
       body: jsonEncode({
         'image': 'data:image/jpeg;base64,$base64Image',
       }),

@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'groq_service.dart';
+
 void main() {
   runApp(const SnapshotChefApp());
 }
@@ -15,9 +14,11 @@ class SnapshotChefApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'SnapshotChef',
+      title: 'Snapshot Chef',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.green,
+        ),
         useMaterial3: true,
       ),
       home: const HomePage(),
@@ -33,26 +34,55 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  File? selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  XFile? selectedImage;
   String? result;
   bool loading = false;
 
-  Future <void> takePhoto() async {
-    final picker = ImagePicker();
+  // Take a photo using the camera
+  Future<void> takePhoto() async {
+    try {
+      final image = await _picker.pickImage(
+        source: ImageSource.camera,
+      );
 
-    final image = await picker.pickImage(
-      source: ImageSource.camera,
-    );
+      if (image == null) return;
 
-    if(image == null) return;
-
-    setState(() {
-      selectedImage = File(image.path);
-    });
+      setState(() {
+        selectedImage = image;
+        result = null;
+      });
+    } catch (e) {
+      setState(() {
+        result = 'Unable to take photo: $e';
+      });
+    }
   }
 
+  // Choose an existing image
+  Future<void> selectPhoto() async {
+    try {
+      final image = await _picker.pickImage(
+        source: ImageSource.gallery,
+      );
+
+      if (image == null) return;
+
+      setState(() {
+        selectedImage = image;
+        result = null;
+      });
+    } catch (e) {
+      setState(() {
+        result = 'Unable to select photo: $e';
+      });
+    }
+  }
+
+  // Send the image to the Cloudflare Worker
   Future<void> analyzeImage() async {
-    if(selectedImage == null) return;
+    if (selectedImage == null || loading) return;
 
     setState(() {
       loading = true;
@@ -64,31 +94,24 @@ class _HomePageState extends State<HomePage> {
         selectedImage!,
       );
 
+      if (!mounted) return;
+
       setState(() {
         result = response;
       });
-    } catch(e) {
+    } catch (e) {
+      if (!mounted) return;
+
       setState(() {
-        result = 'Something went Wrong: $e';
+        result = 'Something went wrong:\n$e';
       });
-    }finally {
+    } finally {
+      if (!mounted) return;
+
       setState(() {
         loading = false;
       });
     }
-  }
-  Future<void> selectPhoto() async {
-    final picker = ImagePicker();
-
-    final image = await picker.pickImage(
-      source: ImageSource.gallery,
-    );
-
-    if(image == null) return;
-
-    setState(() {
-      selectedImage = File(image.path);
-    });
   }
 
   @override
@@ -96,57 +119,128 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Snapshot Chef'),
+        centerTitle: true,
       ),
-      body: Center(
+
+      body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
+
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if(selectedImage != null) 
-                Image.file(
-                  selectedImage!,
-                  height: 300,
-                )
-                else
-                  const Icon(
-                    Icons.kitchen,
-                    size: 120,
+
+              // Image preview
+              Expanded(
+                flex: 4,
+                child: Center(
+                  child: selectedImage == null
+                      ? const Icon(
+                          Icons.kitchen,
+                          size: 120,
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+
+                          child: Image.network(
+                            selectedImage!.path,
+                            height: 300,
+                            fit: BoxFit.cover,
+
+                            // Useful loading indicator
+                            loadingBuilder:
+                                (context, child, loadingProgress) {
+                              if (loadingProgress == null) {
+                                return child;
+                              }
+
+                              return const SizedBox(
+                                height: 300,
+                                child: Center(
+                                  child:
+                                      CircularProgressIndicator(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Camera button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: loading ? null : takePhoto,
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text(
+                    'Take a Snapshot of Refrigerator',
                   ),
+                ),
+              ),
 
-                  const SizedBox(height: 30),
+              const SizedBox(height: 10),
 
-                  ElevatedButton.icon(
-                    onPressed: takePhoto,
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Take a snapshot of refrigerator'),
+              // Gallery button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: loading ? null : selectPhoto,
+                  icon: const Icon(Icons.photo),
+                  label: const Text(
+                    'Choose from Gallery',
                   ),
+                ),
+              ),
 
-                  const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-                  OutlinedButton.icon(
-                    onPressed: selectPhoto,
-                    icon: const Icon(Icons.photo),
-                    label: const Text('Choose from Gallery'),
-                  ),
+              // Analyze button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed:
+                      selectedImage == null || loading
+                          ? null
+                          : analyzeImage,
 
-                  const SizedBox(height: 10),
+                  child: loading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Analyze My Fridge',
+                        ),
+                ),
+              ),
 
-                  ElevatedButton(
-                    onPressed: loading ? null : analyzeImage,
-                    child: loading
-                    ? const CircularProgressIndicator()
-                    : const Text('Analyze My Fridge'),
-                  ),
-                  
-                  const SizedBox(height: 10),
+              const SizedBox(height: 20),
 
-                  if(result != null)
-                    Expanded(
+              // AI result
+              if (result != null)
+                Expanded(
+                  flex: 3,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+
                       child: SingleChildScrollView(
-                        child: Text(result!),
+                        child: Text(
+                          result!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            height: 1.5,
+                          ),
+                        ),
                       ),
                     ),
+                  ),
+                ),
             ],
           ),
         ),
