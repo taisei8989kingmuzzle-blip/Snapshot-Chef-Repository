@@ -1,5 +1,18 @@
+const corsHeaders = {
+		"Access-Control-Allow-Origin": "*",
+		"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+		"Access-Control-Allow-Headers": "Content-Type",
+	};
+
 export default {
-  async fetch(request, env): Promise<Response> {
+  async fetch(request, env, ctx): Promise<Response> {
+	
+
+	if(request.method === "OPTIONS") {
+		return new Response(null, {
+			headers: corsHeaders,
+		});
+	}
 
     // Allow GET requests for a simple health check
     if (request.method === "GET") {
@@ -9,6 +22,7 @@ export default {
         }),
         {
           headers: {
+			...corsHeaders,
             "Content-Type": "application/json"
           }
         }
@@ -24,7 +38,8 @@ export default {
         {
           status: 405,
           headers: {
-            "Content-Type": "application/json"
+			...corsHeaders,
+            "Content-Type": "application/json",
           }
         }
       );
@@ -43,7 +58,8 @@ export default {
           {
             status: 400,
             headers: {
-              "Content-Type": "application/json"
+				...corsHeaders,
+              "Content-Type": "application/json",
             }
           }
         );
@@ -96,7 +112,7 @@ Instructions:
 3. step
 
 Please do not claim that an ingredient exists if you cannot reasonably see it.
-`
+`,
                   },
 
                   {
@@ -121,6 +137,7 @@ Please do not claim that an ingredient exists if you cannot reasonably see it.
           status: groqResponse.status,
 
           headers: {
+			...corsHeaders,
             "Content-Type": "application/json"
           }
         }
@@ -136,7 +153,8 @@ Please do not claim that an ingredient exists if you cannot reasonably see it.
           status: 500,
 
           headers: {
-            "Content-Type": "application/json"
+			...corsHeaders,
+            "Content-Type": "application/json",
           }
         }
       );

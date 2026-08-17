@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class GroqService {
   static const String backendUrl =
-      'https://snapshot-chef.workers.dev';
+      'https://snapshot-chef-backend.snapshot-chef.workers.dev';
 
   static Future<String> analyzeFridge(XFile image) async {
     final bytes = await image.readAsBytes();
