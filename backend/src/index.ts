@@ -78,6 +78,12 @@ export default {
           body: JSON.stringify({
             model: "qwen/qwen3.6-27b",
 
+			reasoning_effort: "none",
+			reasoning_format: "hidden",
+
+			temperature: 0.2,
+
+			
             messages: [
               {
                 role: "user",
