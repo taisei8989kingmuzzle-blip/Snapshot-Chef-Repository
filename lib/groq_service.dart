@@ -29,6 +29,36 @@ class GroqService {
 
     final data = jsonDecode(response.body);
 
-    return data['choices'][0]['message']['content'];
+    final dish = data['dish'] ?? 'Unknown dish';
+
+    final ingredients = data['ingredients'] is List
+        ? List<String>.from(data['ingredients'])
+        : <String>[];
+
+    final why = data['why'] ?? 'This recipe uses ingredients detected in your refrigerator.';
+
+    final instructions = data['instructions'] is List
+        ? List<String>.from(data['instructions'])
+        : <String>[];
+
+    final tip = data['tip'] ?? 'None';
+
+    return '''
+    $dish
+
+    Ingredients:
+    ${ingredients.isEmpty ? 'No ingredients detected.' : ingredients.map((e) => '• $e').join('\n')}
+
+    Why this dish:
+    $why
+
+    Instructions:
+    ${instructions.isEmpty ? 'No instructions were provided.' : instructions.asMap().entries.map(
+      (entry) => '${entry.key + 1}. ${entry.value}'
+    ).join('\n')}
+
+    Tip:
+    $tip
+    ''';
   }
 }

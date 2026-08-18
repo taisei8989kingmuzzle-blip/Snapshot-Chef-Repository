@@ -87,31 +87,63 @@ export default {
                     type: "text",
 
                     text: `
-Look at this refrigerator photo.
+You are the recipe engine for Snapshot Chef.
 
-Please identify the food ingredients that are clearly visible.
+Analyze the refrigerator photo and identify only food ingredients that are clearly visible.
 
-Then suggest one dish that can reasonably be made using those ingredients.
+Then create ONE practical dish that can reasonably be made using those ingredients.
 
-Return your answer in this format:
+Rules:
+- Do not invent ingredients.
+- Only include ingredients that you can reasonably see.
+- You may assume basic cooking necessities such as water, salt, and cooking oil.
+- Prefer recipes that use several detected ingredients.
+- Keep the recipe practical and simple.
+- If there are not enough ingredients for a complete dish, explain this briefly in the "why" field.
+- Do not include introductions.
+- Do not include conclusions.
+- Do not include conversational text.
+- Do not use Markdown.
+- Do not use asterisks.
+- Do not include <think> or reasoning.
+- Return ONLY valid JSON.
 
-Ingredients detected:
-- ingredient 1
-- ingredient 2
-- ingredient 3
+The JSON MUST contain all five fields below.
 
-Suggested Dish:
-dish name
+Every field is REQUIRED.
 
-Why this dish:
-short explanation
+"ingredients" MUST always be an array of strings.
+"instructions" MUST always be an array of strings.
 
-Instructions:
-1. step
-2. step
-3. step
+Never return null for any field.
 
-Please do not claim that an ingredient exists if you cannot reasonably see it.
+Even if no ingredients are confidently detected, return:
+"ingredients": []
+
+Even if no useful tip exists, return:
+"tip": "None"
+
+Return ONLY the JSON object.
+Do not include <think>.
+Do not include Markdown.
+Do not include text before or after the JSON.:
+
+{
+  "dish": "name of dish",
+  "ingredients": [
+    "ingredient 1",
+    "ingredient 2",
+    "ingredient 3"
+  ],
+  "why": "short explanation",
+  "instructions": [
+    "step 1",
+    "step 2",
+    "step 3",
+    "step 4"
+  ],
+  "tip": "one useful cooking tip"
+}
 `,
                   },
 
@@ -120,28 +152,92 @@ Please do not claim that an ingredient exists if you cannot reasonably see it.
 
                     image_url: {
                       url: image
-                    }
-                  }
-                ]
-              }
-            ]
-          })
+                    },
+                  },
+                ],
+              },
+            ],
+
+			response_format: {
+				type: "json_object",
+			},
+          }),
         }
       );
 
       const groqData = await groqResponse.json();
 
-      return new Response(
-        JSON.stringify(groqData),
-        {
-          status: groqResponse.status,
+	  const content = 
+	  	groqData.choices?.[0]?.message?.content;
 
-          headers: {
-			...corsHeaders,
-            "Content-Type": "application/json"
-          }
-        }
-      );
+	  if(!content) {
+		return new Response(
+			JSON.stringify({
+				error: "Groq did not return a recipe",
+			}),
+			{
+				status: 500,
+				headers: {
+					...corsHeaders,
+					"Content-Type": "application/json",
+				},
+			}
+		);
+	  }
+
+	  let recipe;
+
+	  try {
+		recipe = JSON.parse(content);
+	  } catch (error) {
+		if (
+			!recipe ||
+			typeof recipe.dish !== "string" ||
+			!Array.isArray(recipe.ingredients) ||
+			typeof recipe.why != "string" ||
+			!Array.isArray(recipe.instructions) ||
+			typeof recipe.tip !== "string" 
+		) {
+			return new Response(
+				JSON.stringify({
+					error: "Groq returned an incomplete recipe.",
+					raw: recipe,
+				}),
+				{
+					status: 500,
+					headers: {
+						...corsHeaders,
+						"Content-Type": "application/json",
+					},
+				}
+			);
+		}
+
+		return new Response(
+			JSON.stringify({
+				error: "Groq returned invalid JSON.",
+			}),
+			{
+				status: 500,
+				headers: {
+					...corsHeaders,
+					"Content-Type": "application/json",
+				},
+			}
+		);
+	  }
+	  
+	  return new Response(
+		JSON.stringify(recipe),
+		{
+			status: 200,
+			headers: {
+				...corsHeaders,
+				"Content-Type": "application/json",
+			},
+		}
+	  );
+      
 
     } catch (error) {
 

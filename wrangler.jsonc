@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "snapshot-chef",
+  "compatibility_date": "2026-08-18",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "web"
+  }
+}
