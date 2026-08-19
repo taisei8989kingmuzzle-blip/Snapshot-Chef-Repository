@@ -118,10 +118,15 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Snapshot Chef'),
+        title: const Text('Snapshot Chef'
+        ),
         centerTitle: true,
+        leading: const Icon(
+          Icons.kitchen,
+          size: 40,
+        )
       ),
-
+      
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -170,12 +175,17 @@ class _HomePageState extends State<HomePage> {
 
               // Camera button
               SizedBox(
-                width: double.infinity,
+                height: 50,
+                width: 800,
                 child: ElevatedButton.icon(
                   onPressed: loading ? null : takePhoto,
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text(
+                  icon: const Icon(Icons.camera_alt, size: 25),
+                  label:  const Text(
                     'Take a Snapshot of Refrigerator',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    )
                   ),
                 ),
               ),
@@ -184,12 +194,17 @@ class _HomePageState extends State<HomePage> {
 
               // Gallery button
               SizedBox(
-                width: double.infinity,
+                height: 50,
+                width: 800,
                 child: OutlinedButton.icon(
                   onPressed: loading ? null : selectPhoto,
-                  icon: const Icon(Icons.photo),
+                  icon: const Icon(Icons.photo, size: 25),
                   label: const Text(
                     'Choose from Gallery',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    )
                   ),
                 ),
               ),
@@ -198,7 +213,8 @@ class _HomePageState extends State<HomePage> {
 
               // Analyze button
               SizedBox(
-                width: double.infinity,
+                height: 50,
+                width: 800,
                 child: ElevatedButton(
                   onPressed:
                       selectedImage == null || loading
@@ -215,6 +231,10 @@ class _HomePageState extends State<HomePage> {
                         )
                       : const Text(
                           'Analyze My Fridge',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          )
                         ),
                 ),
               ),
