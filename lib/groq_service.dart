@@ -6,7 +6,7 @@ class GroqService {
   static const String backendUrl =
       'https://snapshot-chef-backend.snapshot-chef.workers.dev';
 
-  static Future<String> analyzeFridge(XFile image) async {
+  static Future<Map<String, dynamic>> analyzeFridge(XFile image) async {
     final bytes = await image.readAsBytes();
 
     final base64Image = base64Encode(bytes);
@@ -43,22 +43,6 @@ class GroqService {
 
     final tip = data['tip'] ?? 'None';
 
-    return '''
-    $dish
-
-    Ingredients:
-    ${ingredients.isEmpty ? 'No ingredients detected.' : ingredients.map((e) => '• $e').join('\n')}
-
-    Why this dish:
-    $why
-
-    Instructions:
-    ${instructions.isEmpty ? 'No instructions were provided.' : instructions.asMap().entries.map(
-      (entry) => '${entry.key + 1}. ${entry.value}'
-    ).join('\n')}
-
-    Tip:
-    $tip
-    ''';
+    return data;
   }
 }
